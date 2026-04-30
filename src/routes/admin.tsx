@@ -1,7 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-
+import { PageShell } from "@/components/PageShell"; // 🔥 مهم
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
