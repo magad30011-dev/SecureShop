@@ -196,6 +196,15 @@ function AdminInner({ user }: { user: any }) {
   }
 
   async function addProduct(e: React.FormEvent) {
+    const { error: testError } = await supabase
+  .from("products")
+  .insert({
+    name: "HACK TEST",
+    price: 1,
+    category: "hack"
+  });
+
+console.log("RLS TEST:", testError);
     e.preventDefault();
 
     if (!name || !price || !category) return;
