@@ -9,7 +9,7 @@ import {
 } from "@/lib/auth";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PRODUCTS, type Product } from "@/lib/data";
-import { getLogs, subscribeLogs } from "@/lib/security";
+import { getLogs } from "@/lib/security";
 import { supabase } from "@/integrations/supabase/client";
 
 import { Button } from "@/components/ui/button";
@@ -117,24 +117,23 @@ function AdminInner({ user }: { user: any }) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    loadProducts();
-    refreshUsers();
+useEffect(() => {
+  const interval = setInterval(() => {
+    setLogs(getLogs());
+  }, 3000); // كل 3 ثواني فقط
 
-    const unsub = subscribeLogs(() => {
-      setLogs(getLogs());
-    });
+  return () => clearInterval(interval);
+}, []);
 
-    return unsub;
-  }, []);
-
-  async function loadProducts() {
+ async function loadProducts() {
+  try {
     const { data, error } = await supabase
       .from("products")
       .select("*")
       .order("id", { ascending: true });
 
     if (error || !data) {
+      console.error("Supabase error:", error);
       setItems(PRODUCTS);
       return;
     }
@@ -150,7 +149,10 @@ function AdminInner({ user }: { user: any }) {
     }));
 
     setItems(mapped);
+  } catch (e) {
+    console.error("loadProducts crash:", e);
   }
+}
 
   async function refreshUsers() {
     const list = await adminListUsers();
@@ -196,15 +198,6 @@ function AdminInner({ user }: { user: any }) {
   }
 
   async function addProduct(e: React.FormEvent) {
-    const { error: testError } = await supabase
-  .from("products")
-  .insert({
-    name: "HACK TEST",
-    price: 1,
-    category: "hack"
-  });
-
-console.log("RLS TEST:", testError);
     e.preventDefault();
 
     if (!name || !price || !category) return;
