@@ -1,3 +1,4 @@
+const isSafeMode = window.location.search.includes("safe=true");
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/PageShell";
 import {
