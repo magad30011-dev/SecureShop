@@ -1,12 +1,7 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { PageShell } from "@/components/PageShell";
 import { useAuth } from "@/lib/auth";
-import {
-  User,
-  ShoppingBag,
-  Shield,
-  LogOut,
-} from "lucide-react";
+import { User, ShoppingBag, Shield, LogOut } from "lucide-react";
 
 export const Route = createFileRoute("/account")({
   component: AccountPage,
@@ -29,9 +24,7 @@ function AccountPage() {
       <section className="bg-gradient-hero py-16 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <h1 className="text-4xl font-bold">My Account</h1>
-          <p className="mt-2 text-white/80">
-            Manage your profile and account settings.
-          </p>
+          <p className="mt-2 text-white/80">Manage your profile and account settings.</p>
         </div>
       </section>
 
@@ -46,12 +39,8 @@ function AccountPage() {
               </div>
 
               <div>
-                <h2 className="text-lg font-bold">
-                  {user.email?.split("@")[0]}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {user.email}
-                </p>
+                <h2 className="text-lg font-bold">{user.email?.split("@")[0]}</h2>
+                <p className="text-sm text-muted-foreground">{user.email}</p>
               </div>
             </div>
 
@@ -72,19 +61,11 @@ function AccountPage() {
           <div className="space-y-6">
             {/* Profile */}
             <div className="rounded-3xl border border-border bg-gradient-card p-6 shadow-card">
-              <h3 className="text-2xl font-bold">
-                Profile Information
-              </h3>
+              <h3 className="text-2xl font-bold">Profile Information</h3>
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <Field
-                  label="Full Name"
-                  value={user.email?.split("@")[0] || ""}
-                />
-                <Field
-                  label="Email"
-                  value={user.email || ""}
-                />
+                <Field label="Full Name" value={user.email?.split("@")[0] || ""} />
+                <Field label="Email" value={user.email || ""} />
                 <Field label="Phone" value="" />
                 <Field label="Country" value="" />
               </div>
@@ -98,22 +79,12 @@ function AccountPage() {
             <div className="rounded-3xl border border-border bg-gradient-card p-6 shadow-card">
               <div className="flex items-center gap-2">
                 <ShoppingBag className="h-5 w-5" />
-                <h3 className="text-2xl font-bold">
-                  Recent Orders
-                </h3>
+                <h3 className="text-2xl font-bold">Recent Orders</h3>
               </div>
 
               <div className="mt-5 space-y-3">
-                <OrderRow
-                  id="#1001"
-                  total="$240"
-                  status="Delivered"
-                />
-                <OrderRow
-                  id="#1002"
-                  total="$90"
-                  status="Processing"
-                />
+                <OrderRow id="#1001" total="$240" status="Delivered" />
+                <OrderRow id="#1002" total="$90" status="Processing" />
               </div>
             </div>
 
@@ -121,9 +92,7 @@ function AccountPage() {
             <div className="rounded-3xl border border-border bg-gradient-card p-6 shadow-card">
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                <h3 className="text-2xl font-bold">
-                  Security
-                </h3>
+                <h3 className="text-2xl font-bold">Security</h3>
               </div>
 
               <div className="mt-5 space-y-3">
@@ -139,18 +108,10 @@ function AccountPage() {
   );
 }
 
-function Field({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <label className="mb-2 block text-sm text-muted-foreground">
-        {label}
-      </label>
+      <label className="mb-2 block text-sm text-muted-foreground">{label}</label>
 
       <input
         defaultValue={value}
@@ -160,15 +121,7 @@ function Field({
   );
 }
 
-function OrderRow({
-  id,
-  total,
-  status,
-}: {
-  id: string;
-  total: string;
-  status: string;
-}) {
+function OrderRow({ id, total, status }: { id: string; total: string; status: string }) {
   return (
     <div className="flex items-center justify-between rounded-2xl border border-border px-4 py-3">
       <span>{id}</span>

@@ -7,8 +7,10 @@ import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <AuthProvider> {/* 🔥 يحل مشكلة الشاشة البيضاء */}
+    <AuthProvider>
+      {" "}
+      {/* 🔥 يحل مشكلة الشاشة البيضاء */}
       <RouterProvider router={router} />
     </AuthProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

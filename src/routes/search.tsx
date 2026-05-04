@@ -84,10 +84,7 @@ function SearchPage() {
     if (!safeQuery) return items;
 
     return items.filter((p) =>
-      [p.name, p.category, p.description]
-        .join(" ")
-        .toLowerCase()
-        .includes(safeQuery)
+      [p.name, p.category, p.description].join(" ").toLowerCase().includes(safeQuery),
     );
   }, [items, safeQuery]);
 
@@ -114,9 +111,7 @@ function SearchPage() {
           />
         </div>
 
-        {error && (
-          <p className="mt-2 text-sm text-destructive">{error}</p>
-        )}
+        {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
 
         {blocked && (
           <div className="mt-3 flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">

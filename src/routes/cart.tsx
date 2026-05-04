@@ -18,10 +18,7 @@ function CartPage() {
 
   const refresh = () => setItems(getCart());
 
-  const total = items.reduce(
-    (sum, item) => sum + item.price * item.qty,
-    0
-  );
+  const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
 
   const handleCheckout = async () => {
     if (!user) {
@@ -61,9 +58,7 @@ function CartPage() {
         quantity: item.qty,
       }));
 
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(rows);
+      const { error: itemsError } = await supabase.from("order_items").insert(rows);
 
       if (itemsError) {
         console.error(itemsError);
@@ -89,9 +84,7 @@ function CartPage() {
         <h1 className="text-3xl font-bold">Shopping Cart</h1>
 
         {items.length === 0 ? (
-          <p className="mt-6 text-muted-foreground">
-            Cart is empty
-          </p>
+          <p className="mt-6 text-muted-foreground">Cart is empty</p>
         ) : (
           <>
             <div className="mt-6 space-y-4">
@@ -108,9 +101,7 @@ function CartPage() {
                     />
 
                     <div>
-                      <h2 className="font-semibold">
-                        {item.name}
-                      </h2>
+                      <h2 className="font-semibold">{item.name}</h2>
 
                       <p className="text-sm text-muted-foreground">
                         ${item.price} × {item.qty}
@@ -131,9 +122,7 @@ function CartPage() {
               ))}
             </div>
 
-            <div className="mt-6 text-xl font-bold">
-              Total: ${total}
-            </div>
+            <div className="mt-6 text-xl font-bold">Total: ${total}</div>
 
             <Button
               className="mt-4 bg-gradient-primary"

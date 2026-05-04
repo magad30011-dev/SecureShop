@@ -1,4 +1,3 @@
-const isSafeMode = window.location.search.includes("safe=true");
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/PageShell";
 import {
@@ -53,14 +52,12 @@ export const Route = createFileRoute("/admin")({
 function AdminPage() {
   const { user, loading } = useAuth();
   if (loading) {
-  return (
-    <PageShell>
-      <div className="flex min-h-[60vh] items-center justify-center">
-        Loading...
-      </div>
-    </PageShell>
-  );
-}
+    return (
+      <PageShell>
+        <div className="flex min-h-[60vh] items-center justify-center">Loading...</div>
+      </PageShell>
+    );
+  }
 
   if (!user || user.role !== "admin") {
     return (
@@ -89,19 +86,15 @@ function AdminPage() {
     );
   }
 
- return <AdminInner user={user} />;
+  return <AdminInner user={user} />;
 }
 
 function AdminInner({ user }: { user: any }) {
- 
-
   const [items, setItems] = useState<Product[]>(PRODUCTS);
   const [logs, setLogs] = useState(getLogs());
 
   const [users, setUsers] = useState<AdminUserView[]>([]);
-  const [userMsg, setUserMsg] = useState<{ ok: boolean; text: string } | null>(
-    null
-  );
+  const [userMsg, setUserMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const [adminNewPw, setAdminNewPw] = useState("");
   const [adminPwMsg, setAdminPwMsg] = useState<{
@@ -118,46 +111,71 @@ function AdminInner({ user }: { user: any }) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-useEffect(() => {
-  const interval = setInterval(() => {
-    setLogs(getLogs());
-  }, 3000); // كل 3 ثواني فقط
+  useEffect(() => {
+    loadProducts();
+    refreshUsers();
 
-  return () => clearInterval(interval);
-}, []);
+    const interval = setInterval(() => {
+      setLogs(getLogs());
+    }, 3000); // كل 3 ثواني فقط
 
- async function loadProducts() {
-  try {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("id", { ascending: true });
+    return () => clearInterval(interval);
+  }, []);
 
-    if (error || !data) {
-      console.error("Supabase error:", error);
-      setItems(PRODUCTS);
-      return;
+  async function loadProducts() {
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .order("id", { ascending: true });
+
+        if (error && error.code === "429") {
+          await new Promise((res) => setTimeout(res, 1000));
+          retries--;
+          continue;
+        }
+
+        if (error || !data) {
+          console.error("Supabase error:", error);
+          setItems(PRODUCTS);
+          return;
+        }
+
+        const mapped: Product[] = data.map((row: any) => ({
+          id: Number(row.id),
+          name: row.name,
+          category: row.category,
+          price: Number(row.price),
+          image: row.image_url || PRODUCTS[0].image,
+          description: row.description || "",
+          stock: row.stock ?? 0,
+        }));
+
+        setItems(mapped);
+        return;
+      } catch (e) {
+        console.error("loadProducts crash:", e);
+        await new Promise((res) => setTimeout(res, 1000));
+        retries--;
+      }
     }
-
-    const mapped: Product[] = data.map((row: any) => ({
-      id: Number(row.id),
-      name: row.name,
-      category: row.category,
-      price: Number(row.price),
-      image: row.image_url || PRODUCTS[0].image,
-      description: row.description || "",
-      stock: row.stock ?? 0,
-    }));
-
-    setItems(mapped);
-  } catch (e) {
-    console.error("loadProducts crash:", e);
   }
-}
 
   async function refreshUsers() {
-    const list = await adminListUsers();
-    setUsers(list);
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        const list = await adminListUsers();
+        setUsers(list);
+        return;
+      } catch (e) {
+        console.error("refreshUsers error:", e);
+        await new Promise((res) => setTimeout(res, 1000));
+        retries--;
+      }
+    }
   }
 
   const categories = useMemo(() => {
@@ -172,7 +190,7 @@ useEffect(() => {
       blocks: logs.filter((l) => l.level === "block").length,
       warns: logs.filter((l) => l.level === "warn").length,
     }),
-    [items, logs]
+    [items, logs],
   );
 
   function handleAddCategory() {
@@ -203,8 +221,7 @@ useEffect(() => {
 
     if (!name || !price || !category) return;
 
-    const finalImage =
-      imageUrl.trim() || imageData || PRODUCTS[0].image;
+    const finalImage = imageUrl.trim() || imageData || PRODUCTS[0].image;
 
     const { error } = await supabase.from("products").insert({
       name: name.trim(),
@@ -242,10 +259,7 @@ useEffect(() => {
   async function updateStock(id: number, current: number, diff: number) {
     const next = Math.max(0, current + diff);
 
-    await supabase
-      .from("products")
-      .update({ stock: next })
-      .eq("id", id);
+    await supabase.from("products").update({ stock: next }).eq("id", id);
 
     loadProducts();
   }
@@ -297,9 +311,7 @@ useEffect(() => {
       <section className="bg-gradient-hero py-12 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <p className="text-sm text-white/70">Logged in as admin</p>
-          <h1 className="text-3xl font-bold sm:text-4xl">
-            Admin Dashboard
-          </h1>
+          <h1 className="text-3xl font-bold sm:text-4xl">Admin Dashboard</h1>
         </div>
       </section>
 
@@ -342,9 +354,7 @@ useEffect(() => {
               </div>
 
               <div className="text-3xl font-bold">{s.value}</div>
-              <div className="text-sm text-muted-foreground">
-                {s.label}
-              </div>
+              <div className="text-sm text-muted-foreground">{s.label}</div>
             </div>
           ))}
         </div>
@@ -357,19 +367,13 @@ useEffect(() => {
             <form onSubmit={addProduct} className="mt-4 space-y-3">
               <div>
                 <Label>Name</Label>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
+                <Input value={name} onChange={(e) => setName(e.target.value)} />
               </div>
 
               <div>
                 <Label>Category</Label>
 
-                <Select
-                  value={category}
-                  onValueChange={setCategory}
-                >
+                <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choose category" />
                   </SelectTrigger>
@@ -387,16 +391,10 @@ useEffect(() => {
                   <Input
                     value={newCategory}
                     placeholder="New category"
-                    onChange={(e) =>
-                      setNewCategory(e.target.value)
-                    }
+                    onChange={(e) => setNewCategory(e.target.value)}
                   />
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAddCategory}
-                  >
+                  <Button type="button" variant="outline" onClick={handleAddCategory}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -404,19 +402,12 @@ useEffect(() => {
 
               <div>
                 <Label>Price</Label>
-                <Input
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                />
+                <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
               </div>
 
               <div>
                 <Label>Image URL</Label>
-                <Input
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                />
+                <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
               </div>
 
               <div>
@@ -433,19 +424,14 @@ useEffect(() => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() =>
-                    fileInputRef.current?.click()
-                  }
+                  onClick={() => fileInputRef.current?.click()}
                 >
                   <ImagePlus className="mr-1 h-4 w-4" />
                   Upload Image
                 </Button>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full bg-gradient-primary"
-              >
+              <Button type="submit" className="w-full bg-gradient-primary">
                 <Plus className="mr-1 h-4 w-4" />
                 Add
               </Button>
@@ -454,9 +440,7 @@ useEffect(() => {
 
           {/* Manage Products */}
           <div className="rounded-xl border border-border bg-gradient-card p-6 shadow-card lg:col-span-2">
-            <h2 className="text-lg font-semibold">
-              Manage Products
-            </h2>
+            <h2 className="text-lg font-semibold">Manage Products</h2>
 
             <div className="mt-4 max-h-96 overflow-auto">
               <table className="w-full text-sm">
@@ -472,17 +456,10 @@ useEffect(() => {
 
                 <tbody>
                   {items.map((p) => (
-                    <tr
-                      key={p.id}
-                      className="border-t border-border"
-                    >
-                      <td className="py-2 font-medium">
-                        {p.name}
-                      </td>
+                    <tr key={p.id} className="border-t border-border">
+                      <td className="py-2 font-medium">{p.name}</td>
 
-                      <td className="py-2 text-muted-foreground">
-                        {p.category}
-                      </td>
+                      <td className="py-2 text-muted-foreground">{p.category}</td>
 
                       <td className="py-2">${p.price}</td>
 
@@ -493,13 +470,7 @@ useEffect(() => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() =>
-                              updateStock(
-                                p.id,
-                                p.stock,
-                                1
-                              )
-                            }
+                            onClick={() => updateStock(p.id, p.stock, 1)}
                           >
                             +
                           </Button>
@@ -507,13 +478,7 @@ useEffect(() => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() =>
-                              updateStock(
-                                p.id,
-                                p.stock,
-                                -1
-                              )
-                            }
+                            onClick={() => updateStock(p.id, p.stock, -1)}
                           >
                             -
                           </Button>
@@ -521,13 +486,7 @@ useEffect(() => {
                       </td>
 
                       <td className="py-2 text-right">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() =>
-                            deleteProduct(p.id)
-                          }
-                        >
+                        <Button size="sm" variant="ghost" onClick={() => deleteProduct(p.id)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </td>
@@ -544,59 +503,36 @@ useEffect(() => {
           <div className="rounded-xl border border-border bg-gradient-card p-6 shadow-card">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold">
-                Account Tools
-              </h2>
+              <h2 className="text-lg font-semibold">Account Tools</h2>
             </div>
 
             <div className="mt-6 border-t border-border pt-4">
               <div className="flex items-center gap-2">
                 <KeyRound className="h-5 w-5 text-accent" />
-                <h3 className="text-sm font-semibold">
-                  Change My Admin Password
-                </h3>
+                <h3 className="text-sm font-semibold">Change My Admin Password</h3>
               </div>
 
-              <form
-                onSubmit={handleAdminPwChange}
-                className="mt-3 space-y-3"
-              >
+              <form onSubmit={handleAdminPwChange} className="mt-3 space-y-3">
                 <Input
                   type="password"
                   value={adminNewPw}
-                  onChange={(e) =>
-                    setAdminNewPw(e.target.value)
-                  }
+                  onChange={(e) => setAdminNewPw(e.target.value)}
                   placeholder="New password"
                 />
 
-                <Button
-                  type="submit"
-                  variant="outline"
-                  className="w-full"
-                >
+                <Button type="submit" variant="outline" className="w-full">
                   Update Password
                 </Button>
 
-                {adminPwMsg && (
-                  <p className="text-xs">
-                    {adminPwMsg.text}
-                  </p>
-                )}
+                {adminPwMsg && <p className="text-xs">{adminPwMsg.text}</p>}
               </form>
             </div>
           </div>
 
           <div className="rounded-xl border border-border bg-gradient-card p-6 shadow-card lg:col-span-2">
-            <h2 className="text-lg font-semibold">
-              Manage Users
-            </h2>
+            <h2 className="text-lg font-semibold">Manage Users</h2>
 
-            {userMsg && (
-              <div className="mt-3 rounded-md border p-2 text-xs">
-                {userMsg.text}
-              </div>
-            )}
+            {userMsg && <div className="mt-3 rounded-md border p-2 text-xs">{userMsg.text}</div>}
 
             <div className="mt-4 max-h-96 overflow-auto">
               <table className="w-full text-sm">
@@ -610,19 +546,14 @@ useEffect(() => {
 
                 <tbody>
                   {users.map((u) => (
-                    <tr
-                      key={u.id}
-                      className="border-t border-border"
-                    >
+                    <tr key={u.id} className="border-t border-border">
                       <td className="py-2">{u.email}</td>
                       <td className="py-2">{u.role}</td>
                       <td className="py-2">
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() =>
-                            handleSendReset(u.email)
-                          }
+                          onClick={() => handleSendReset(u.email)}
                         >
                           <KeyRound className="mr-1 h-3 w-3" />
                           Reset
@@ -633,10 +564,7 @@ useEffect(() => {
 
                   {users.length === 0 && (
                     <tr>
-                      <td
-                        colSpan={3}
-                        className="py-4 text-center text-muted-foreground"
-                      >
+                      <td colSpan={3} className="py-4 text-center text-muted-foreground">
                         No users yet
                       </td>
                     </tr>

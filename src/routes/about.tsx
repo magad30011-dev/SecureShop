@@ -7,7 +7,11 @@ export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
       { title: "About — SecureShop" },
-      { name: "description", content: "Meet the team behind SecureShop and the technologies powering this cybersecurity university project." },
+      {
+        name: "description",
+        content:
+          "Meet the team behind SecureShop and the technologies powering this cybersecurity university project.",
+      },
       { property: "og:title", content: "About — SecureShop" },
       { property: "og:description", content: "Meet the team behind SecureShop." },
     ],
@@ -25,7 +29,8 @@ function AboutPage() {
           </span>
           <h1 className="mt-4 text-4xl font-bold sm:text-5xl">About the Project</h1>
           <p className="mx-auto mt-4 max-w-2xl text-white/80">
-            SecureShop is a hands-on cybersecurity capstone built by a team of four students to demonstrate secure web development end-to-end.
+            SecureShop is a hands-on cybersecurity capstone built by a team of four students to
+            demonstrate secure web development end-to-end.
           </p>
         </div>
       </section>
@@ -38,9 +43,11 @@ function AboutPage() {
             <h2 className="text-2xl font-bold">Project Description</h2>
           </div>
           <p className="mt-4 text-muted-foreground">
-            SecureShop is a fully responsive e-commerce demonstrator that integrates the seven pillars of modern application security:
-            secure requirements, threat modeling, RASP, SCA, SAST, DAST, and continuous vulnerability scanning. Every page, form,
-            and component is designed to illustrate a real-world security pattern in a way that is easy to read and grade.
+            SecureShop is a fully responsive e-commerce demonstrator that integrates the seven
+            pillars of modern application security: secure requirements, threat modeling, RASP, SCA,
+            SAST, DAST, and continuous vulnerability scanning. Every page, form, and component is
+            designed to illustrate a real-world security pattern in a way that is easy to read and
+            grade.
           </p>
         </div>
       </section>
@@ -53,7 +60,10 @@ function AboutPage() {
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {TEAM.map((m) => (
-            <div key={m.name} className="rounded-xl border border-border bg-gradient-card p-6 text-center shadow-card transition-smooth hover:-translate-y-1 hover:shadow-elevated">
+            <div
+              key={m.name}
+              className="rounded-xl border border-border bg-gradient-card p-6 text-center shadow-card transition-smooth hover:-translate-y-1 hover:shadow-elevated"
+            >
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-primary text-lg font-bold text-primary-foreground shadow-glow">
                 {m.initials}
               </div>
@@ -73,7 +83,10 @@ function AboutPage() {
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
             {TECHNOLOGIES.map((t) => (
-              <span key={t} className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-sm font-medium text-primary">
+              <span
+                key={t}
+                className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-sm font-medium text-primary"
+              >
                 {t}
               </span>
             ))}

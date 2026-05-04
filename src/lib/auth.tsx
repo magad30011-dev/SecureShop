@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -42,68 +36,95 @@ export type AdminUserView = {
   role: Role;
 };
 
-async function loadUserFromSession(
-  session: Session | null
-): Promise<User | null> {
+async function loadUserFromSession(session: Session | null): Promise<User | null> {
   if (!session?.user) return null;
 
-  try {
-    const { data, error } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", session.user.id)
-      .maybeSingle();
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
 
-    if (error) {
-      console.error("role error:", error);
+      if (error && error.code === "429") {
+        await new Promise((res) => setTimeout(res, 1000));
+        retries--;
+        continue;
+      }
+
+      if (error) {
+        console.error("role error:", error);
+      }
+
+      const role: Role = (data?.role as Role) ?? "user";
+
+      return {
+        id: session.user.id,
+        email: session.user.email ?? "",
+        role,
+      };
+    } catch (err) {
+      console.error("loadUserFromSession failed:", err);
+      await new Promise((res) => setTimeout(res, 1000));
+      retries--;
     }
-
-    const role: Role = (data?.role as Role) ?? "user";
-
-    return {
-      id: session.user.id,
-      email: session.user.email ?? "",
-      role,
-    };
-  } catch (err) {
-    console.error("loadUserFromSession failed:", err);
-
-    return {
-      id: session.user.id,
-      email: session.user.email ?? "",
-      role: "user",
-    };
   }
+
+  return {
+    id: session.user.id,
+    email: session.user.email ?? "",
+    role: "user",
+  };
 }
 
 export async function adminListUsers(): Promise<AdminUserView[]> {
-  const { data: profiles, error } = await supabase
-    .from("profiles")
-    .select("id, email")
-    .order("created_at", { ascending: true });
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      const { data: profiles, error } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .order("created_at", { ascending: true });
 
-  if (error || !profiles) return [];
+      if (error && error.code === "429") {
+        await new Promise((res) => setTimeout(res, 1000));
+        retries--;
+        continue;
+      }
 
-  const { data: roles } = await supabase
-    .from("user_roles")
-    .select("user_id, role");
+      if (error || !profiles) return [];
 
-  const roleMap = new Map<string, Role>();
+      const { data: roles, error: rolesError } = await supabase.from("user_roles").select("user_id, role");
 
-  (roles ?? []).forEach((r: any) => {
-    roleMap.set(r.user_id, r.role as Role);
-  });
+      if (rolesError && rolesError.code === "429") {
+        await new Promise((res) => setTimeout(res, 1000));
+        retries--;
+        continue;
+      }
 
-  return profiles.map((p: any) => ({
-    id: p.id,
-    email: p.email,
-    role: roleMap.get(p.id) ?? "user",
-  }));
+      const roleMap = new Map<string, Role>();
+
+      (roles ?? []).forEach((r: any) => {
+        roleMap.set(r.user_id, r.role as Role);
+      });
+
+      return profiles.map((p: any) => ({
+        id: p.id,
+        email: p.email,
+        role: roleMap.get(p.id) ?? "user",
+      }));
+    } catch (err) {
+      console.error("adminListUsers failed:", err);
+      await new Promise((res) => setTimeout(res, 1000));
+      retries--;
+    }
+  }
+  return [];
 }
 
-export async function adminSendPasswordReset(
-  email: string
-): Promise<AuthResult> {
+export async function adminSendPasswordReset(email: string): Promise<AuthResult> {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/reset-password`,
   });
@@ -122,9 +143,7 @@ export async function adminSendPasswordReset(
   return { ok: true };
 }
 
-export async function adminChangeOwnPassword(
-  newPassword: string
-): Promise<AuthResult> {
+export async function adminChangeOwnPassword(newPassword: string): Promise<AuthResult> {
   if (!newPassword || newPassword.length < 8) {
     return {
       ok: false,
@@ -143,11 +162,7 @@ export async function adminChangeOwnPassword(
   return { ok: true };
 }
 
-export function AuthProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -171,16 +186,14 @@ export function AuthProvider({
 
     init();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        const current = await loadUserFromSession(session);
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const current = await loadUserFromSession(session);
 
-        if (mounted) {
-          setUser(current);
-          setLoading(false);
-        }
+      if (mounted) {
+        setUser(current);
+        setLoading(false);
       }
-    );
+    });
 
     return () => {
       mounted = false;
@@ -188,10 +201,7 @@ export function AuthProvider({
     };
   }, []);
 
-  const login: AuthCtx["login"] = async (
-    email,
-    password
-  ) => {
+  const login: AuthCtx["login"] = async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -214,10 +224,7 @@ export function AuthProvider({
     return { ok: true };
   };
 
-  const register: AuthCtx["register"] = async (
-    email,
-    password
-  ) => {
+  const register: AuthCtx["register"] = async (email, password) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -236,24 +243,23 @@ export function AuthProvider({
     return { ok: true };
   };
 
-  const loginWithGoogle: AuthCtx["loginWithGoogle"] =
-    async () => {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: window.location.origin,
-        },
-      });
+  const loginWithGoogle: AuthCtx["loginWithGoogle"] = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
 
-      if (error) {
-        return {
-          ok: false,
-          error: "Google login failed",
-        };
-      }
+    if (error) {
+      return {
+        ok: false,
+        error: "Google login failed",
+      };
+    }
 
-      return { ok: true };
-    };
+    return { ok: true };
+  };
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -280,9 +286,7 @@ export function useAuth() {
   const ctx = useContext(Ctx);
 
   if (!ctx) {
-    throw new Error(
-      "useAuth must be used inside AuthProvider"
-    );
+    throw new Error("useAuth must be used inside AuthProvider");
   }
 
   return ctx;

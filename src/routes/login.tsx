@@ -87,10 +87,7 @@ function LoginPage() {
     try {
       setLoading(true);
 
-      const res = await login(
-        parsed.data.email,
-        parsed.data.password
-      );
+      const res = await login(parsed.data.email, parsed.data.password);
 
       if (!res.ok) {
         setError(res.error ?? GENERIC_ERROR);
@@ -117,9 +114,7 @@ function LoginPage() {
 
             <div>
               <h1 className="text-2xl font-bold">Welcome back</h1>
-              <p className="text-sm text-muted-foreground">
-                Sign in securely to your account
-              </p>
+              <p className="text-sm text-muted-foreground">Sign in securely to your account</p>
             </div>
           </div>
 
@@ -130,11 +125,7 @@ function LoginPage() {
             disabled={googleLoading || loading}
             className="mb-4 h-11 w-full gap-2 border-border bg-background hover:bg-secondary"
           >
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.75h3.57c2.08-1.92 3.28-4.74 3.28-8.07z"
@@ -153,23 +144,15 @@ function LoginPage() {
               />
             </svg>
 
-            {googleLoading
-              ? "Redirecting..."
-              : "Continue with Google"}
+            {googleLoading ? "Redirecting..." : "Continue with Google"}
           </Button>
 
           <div className="relative mb-4 text-center text-xs text-muted-foreground">
-            <span className="relative z-10 bg-gradient-card px-2">
-              or sign in with email
-            </span>
+            <span className="relative z-10 bg-gradient-card px-2">or sign in with email</span>
             <div className="absolute left-0 right-0 top-1/2 -z-0 border-t border-border" />
           </div>
 
-          <form
-            onSubmit={onSubmit}
-            className="space-y-4"
-            noValidate
-          >
+          <form onSubmit={onSubmit} className="space-y-4" noValidate>
             <div>
               <Label htmlFor="email">Email</Label>
 
@@ -183,9 +166,7 @@ function LoginPage() {
                   required
                   maxLength={255}
                   value={email}
-                  onChange={(e) =>
-                    setEmail(e.target.value)
-                  }
+                  onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
                   placeholder="you@example.com"
                 />
@@ -205,9 +186,7 @@ function LoginPage() {
                   required
                   maxLength={200}
                   value={password}
-                  onChange={(e) =>
-                    setPassword(e.target.value)
-                  }
+                  onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
                   placeholder="••••••••"
                 />
@@ -225,24 +204,18 @@ function LoginPage() {
               disabled={loading || googleLoading}
               className="h-11 w-full bg-gradient-primary shadow-glow"
             >
-              {loading
-                ? "Signing in..."
-                : "Sign In Securely"}
+              {loading ? "Signing in..." : "Sign In Securely"}
             </Button>
           </form>
 
           <div className="mt-5 rounded-md bg-secondary p-3 text-xs text-muted-foreground">
             <ShieldCheck className="mr-1 inline h-3 w-3 text-success" />
-            Protected by hashing, salting, input validation,
-            and session expiry.
+            Protected by hashing, salting, input validation, and session expiry.
           </div>
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
             No account?{" "}
-            <Link
-              to="/register"
-              className="font-medium text-primary hover:underline"
-            >
+            <Link to="/register" className="font-medium text-primary hover:underline">
               Register
             </Link>
           </p>

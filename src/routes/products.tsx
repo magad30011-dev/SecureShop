@@ -59,10 +59,7 @@ function ProductsPage() {
         category: row.category ?? "Other",
         price: Number(row.price ?? 0),
         image:
-          row.image_url &&
-          String(row.image_url).trim() !== ""
-            ? row.image_url
-            : PRODUCTS[0].image,
+          row.image_url && String(row.image_url).trim() !== "" ? row.image_url : PRODUCTS[0].image,
         description: row.description ?? "",
         stock: Number(row.stock ?? 0),
       }));
@@ -79,29 +76,18 @@ function ProductsPage() {
   const categories = useMemo(() => {
     return [
       "All",
-      ...Array.from(
-        new Set(
-          items
-            .map((p) => p.category)
-            .filter((v) => v && v.trim() !== "")
-        )
-      ),
+      ...Array.from(new Set(items.map((p) => p.category).filter((v) => v && v.trim() !== ""))),
     ];
   }, [items]);
 
-  const filtered =
-    active === "All"
-      ? items
-      : items.filter((p) => p.category === active);
+  const filtered = active === "All" ? items : items.filter((p) => p.category === active);
 
   return (
     <PageShell>
       <section className="bg-gradient-hero py-14 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <h1 className="text-3xl font-bold sm:text-4xl">Our Products</h1>
-          <p className="mt-2 text-white/80">
-            Verified, in stock, and securely listed.
-          </p>
+          <p className="mt-2 text-white/80">Verified, in stock, and securely listed.</p>
         </div>
       </section>
 
@@ -123,13 +109,9 @@ function ProductsPage() {
         </div>
 
         {loading ? (
-          <div className="py-10 text-center text-muted-foreground">
-            Loading products...
-          </div>
+          <div className="py-10 text-center text-muted-foreground">Loading products...</div>
         ) : filtered.length === 0 ? (
-          <div className="py-10 text-center text-muted-foreground">
-            No products found.
-          </div>
+          <div className="py-10 text-center text-muted-foreground">No products found.</div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filtered.map((p) => (

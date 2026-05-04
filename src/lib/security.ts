@@ -22,13 +22,18 @@ export async function hashPassword(password: string, salt: string): Promise<stri
 export function generateSalt(): string {
   const arr = new Uint8Array(16);
   crypto.getRandomValues(arr);
-  return Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return Array.from(arr)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 // -------- RASP: Runtime Application Self-Protection --------
 // Detects common injection patterns in user input.
 const ATTACK_PATTERNS: { name: string; regex: RegExp }[] = [
-  { name: "SQL Injection", regex: /(\bunion\b.*\bselect\b|\bor\b\s+1\s*=\s*1|--\s|;\s*drop\s+table)/i },
+  {
+    name: "SQL Injection",
+    regex: /(\bunion\b.*\bselect\b|\bor\b\s+1\s*=\s*1|--\s|;\s*drop\s+table)/i,
+  },
   { name: "XSS", regex: /<script|javascript:|onerror\s*=|onload\s*=/i },
   { name: "Path Traversal", regex: /\.\.\/|\.\.\\/ },
   { name: "Command Injection", regex: /(\||&&|;|`|\$\()\s*(rm|cat|wget|curl|nc)\b/i },
@@ -46,15 +51,38 @@ export type SecurityEvent = {
 
 // In-memory log (in production: send to SIEM)
 const securityLog: SecurityEvent[] = [
-  { id: "seed1", timestamp: new Date(Date.now() - 1000 * 60 * 12).toISOString(), level: "info", type: "AUTH", message: "User session validated", source: "login" },
-  { id: "seed2", timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), level: "warn", type: "RATE_LIMIT", message: "5 failed login attempts from same source", source: "login" },
-  { id: "seed3", timestamp: new Date(Date.now() - 1000 * 60 * 55).toISOString(), level: "block", type: "RASP", message: "Blocked SQL Injection attempt: ' OR 1=1 --", source: "search" },
+  {
+    id: "seed1",
+    timestamp: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+    level: "info",
+    type: "AUTH",
+    message: "User session validated",
+    source: "login",
+  },
+  {
+    id: "seed2",
+    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    level: "warn",
+    type: "RATE_LIMIT",
+    message: "5 failed login attempts from same source",
+    source: "login",
+  },
+  {
+    id: "seed3",
+    timestamp: new Date(Date.now() - 1000 * 60 * 55).toISOString(),
+    level: "block",
+    type: "RASP",
+    message: "Blocked SQL Injection attempt: ' OR 1=1 --",
+    source: "search",
+  },
 ];
 
 const listeners = new Set<() => void>();
 export function subscribeLogs(fn: () => void): () => void {
   listeners.add(fn);
-  return () => { listeners.delete(fn); };
+  return () => {
+    listeners.delete(fn);
+  };
 }
 export function getLogs(): SecurityEvent[] {
   return [...securityLog].reverse();

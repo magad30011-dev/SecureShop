@@ -27,8 +27,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "SecureShop — Secure E-Commerce Demo" },
       {
         property: "og:description",
-        content:
-          "Modern e-commerce app with built-in cybersecurity defenses.",
+        content: "Modern e-commerce app with built-in cybersecurity defenses.",
       },
     ],
   }),
@@ -87,9 +86,8 @@ function Index() {
             </h1>
 
             <p className="mt-5 max-w-xl text-lg text-white/80">
-              SecureShop is a full e-commerce demo that showcases secure coding,
-              threat modeling, RASP, SAST, DAST and SCA — all in one
-              production-style React application.
+              SecureShop is a full e-commerce demo that showcases secure coding, threat modeling,
+              RASP, SAST, DAST and SCA — all in one production-style React application.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -123,10 +121,7 @@ function Index() {
             </div>
           </div>
 
-          <div
-            className="animate-fade-up"
-            style={{ animationDelay: "150ms" }}
-          >
+          <div className="animate-fade-up" style={{ animationDelay: "150ms" }}>
             <img
               src={heroImg}
               alt="Cybersecurity shield protecting an online shopping bag"
@@ -141,13 +136,10 @@ function Index() {
       {/* FEATURES */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Security at Every Layer
-          </h2>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Security at Every Layer</h2>
 
           <p className="mt-3 text-muted-foreground">
-            Designed around the seven core topics of modern application
-            security.
+            Designed around the seven core topics of modern application security.
           </p>
         </div>
 
@@ -164,9 +156,7 @@ function Index() {
 
               <h3 className="text-lg font-semibold">{f.title}</h3>
 
-              <p className="mt-2 text-sm text-muted-foreground">
-                {f.desc}
-              </p>
+              <p className="mt-2 text-sm text-muted-foreground">{f.desc}</p>
             </div>
           ))}
         </div>
@@ -176,13 +166,9 @@ function Index() {
       <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6">
         <div className="flex items-end justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">
-              Featured Products
-            </h2>
+            <h2 className="text-3xl font-bold tracking-tight">Featured Products</h2>
 
-            <p className="mt-2 text-muted-foreground">
-              Hand-picked, securely served.
-            </p>
+            <p className="mt-2 text-muted-foreground">Hand-picked, securely served.</p>
           </div>
 
           <Button asChild variant="ghost">

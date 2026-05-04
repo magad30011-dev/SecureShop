@@ -28,8 +28,7 @@ export const PRODUCTS: Product[] = [
     category: "Audio",
     price: 149,
     image: headphones,
-    description:
-      "Premium wireless over-ear headphones with active noise cancellation.",
+    description: "Premium wireless over-ear headphones with active noise cancellation.",
     stock: 24,
   },
   {
@@ -38,8 +37,7 @@ export const PRODUCTS: Product[] = [
     category: "Wearables",
     price: 219,
     image: watch,
-    description:
-      "Health tracking smart watch with always-on AMOLED display.",
+    description: "Health tracking smart watch with always-on AMOLED display.",
     stock: 18,
   },
   {
@@ -48,8 +46,7 @@ export const PRODUCTS: Product[] = [
     category: "Computers",
     price: 1299,
     image: laptop,
-    description:
-      "Ultra-thin laptop with 18-hour battery and secure enclave chip.",
+    description: "Ultra-thin laptop with 18-hour battery and secure enclave chip.",
     stock: 9,
   },
   {
@@ -58,8 +55,7 @@ export const PRODUCTS: Product[] = [
     category: "Mobile",
     price: 799,
     image: phone,
-    description:
-      "Flagship phone with end-to-end encrypted messaging built in.",
+    description: "Flagship phone with end-to-end encrypted messaging built in.",
     stock: 32,
   },
   {
@@ -68,8 +64,7 @@ export const PRODUCTS: Product[] = [
     category: "Audio",
     price: 89,
     image: speaker,
-    description:
-      "Portable Bluetooth speaker with 360° sound and 20-hour battery.",
+    description: "Portable Bluetooth speaker with 360° sound and 20-hour battery.",
     stock: 41,
   },
   {
@@ -78,8 +73,7 @@ export const PRODUCTS: Product[] = [
     category: "Computers",
     price: 159,
     image: keyboard,
-    description:
-      "Mechanical RGB keyboard with hot-swap switches and aluminum frame.",
+    description: "Mechanical RGB keyboard with hot-swap switches and aluminum frame.",
     stock: 15,
   },
 ];
