@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { PageShell } from "@/components/PageShell";
 import { ProductCard } from "@/components/ProductCard";
 import { PRODUCTS, type Product } from "@/lib/data";
@@ -21,10 +21,12 @@ const QuerySchema = z
 
 function SearchPage() {
   const [items, setItems] = useState<Product[]>([]);
-  const [q, setQ] = useState(""); // ✅ القيم الآمنة فقط
-  const [inputValue, setInputValue] = useState(""); // 👈 المستخدم يكتب هنا
+  const [q, setQ] = useState(""); // القيم الآمنة
+  const [inputValue, setInputValue] = useState(""); // اللي المستخدم يكتبه
   const [error, setError] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<string | null>(null);
+
+  const searchParams = useSearch({ from: "/search" });
 
   useEffect(() => {
     loadProducts();
@@ -69,8 +71,31 @@ function SearchPage() {
     }
   }
 
+  // 🔐 حماية URL (الهجوم اللي كان يفلت منك)
+  useEffect(() => {
+    if (!searchParams.q) return;
+
+    const value = String(searchParams.q);
+
+    const insp = raspInspect(value, "url");
+
+    if (!insp.safe) {
+      setBlocked("Blocked URL attack");
+
+      logSecurityEvent(value, "URL Attack");
+
+      // ❌ حذف الهجوم من الرابط
+      window.history.replaceState({}, "", "/search");
+
+      return;
+    }
+
+    setQ(value);
+    setInputValue(value);
+  }, [searchParams.q]);
+
   const onChange = async (v: string) => {
-    setInputValue(v); // 👈 المستخدم يشوف اللي يكتبه
+    setInputValue(v);
     setBlocked(null);
     setError(null);
 
@@ -81,27 +106,23 @@ function SearchPage() {
 
     const cleaned = v.trim().replace(/\s+/g, " ");
 
-    // ✅ Validation
     const parsed = QuerySchema.safeParse(cleaned);
     if (!parsed.success) {
       setError(parsed.error.issues[0].message);
       return;
     }
 
-    // 🚨 RASP
     const insp = raspInspect(cleaned, "search");
 
     if (!insp.safe) {
       const threat = insp.threat ?? "Suspicious input";
       setBlocked(threat);
 
-      // 🔥 تسجيل الهجوم
       await logSecurityEvent(cleaned, threat);
 
       return; // ⛔ منع الإدخال
     }
 
-    // ✅ فقط القيم النظيفة
     setQ(cleaned);
   };
 
@@ -136,7 +157,7 @@ function SearchPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
           <Input
-            value={inputValue} // 👈 هنا الفرق المهم
+            value={inputValue}
             onChange={(e) => onChange(e.target.value)}
             placeholder="Search products..."
             className="h-12 pl-10 text-base shadow-card"
