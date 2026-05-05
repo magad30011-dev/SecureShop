@@ -54,28 +54,33 @@ function SearchPage() {
   }
 
   const onChange = (v: string) => {
-    setQ(v);
     setBlocked(null);
+    setError(null);
 
     if (!v) {
-      setError(null);
+      setQ("");
       return;
     }
 
-    const parsed = QuerySchema.safeParse(v);
+    // 🔒 تنظيف الإدخال
+    const cleaned = v.trim().replace(/\s+/g, " ");
 
+    // ✅ Validation
+    const parsed = QuerySchema.safeParse(cleaned);
     if (!parsed.success) {
       setError(parsed.error.issues[0].message);
       return;
     }
 
-    setError(null);
-
-    const insp = raspInspect(v, "search");
-
+    // 🚨 RASP check (قبل التخزين)
+    const insp = raspInspect(cleaned, "search");
     if (!insp.safe) {
       setBlocked(insp.threat ?? "Suspicious input");
+      return; // ⛔ منع الإدخال نهائيًا
     }
+
+    // ✅ فقط القيم النظيفة تدخل
+    setQ(cleaned);
   };
 
   const safeQuery = !error && !blocked ? q.toLowerCase() : "";
@@ -84,7 +89,10 @@ function SearchPage() {
     if (!safeQuery) return items;
 
     return items.filter((p) =>
-      [p.name, p.category, p.description].join(" ").toLowerCase().includes(safeQuery),
+      [p.name, p.category, p.description]
+        .join(" ")
+        .toLowerCase()
+        .includes(safeQuery),
     );
   }, [items, safeQuery]);
 
