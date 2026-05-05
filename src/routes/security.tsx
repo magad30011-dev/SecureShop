@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 import { PageShell } from "@/components/PageShell";
 import { getLogs, subscribeLogs, type SecurityEvent } from "@/lib/security";
 import { useEffect, useState } from "react";
@@ -160,9 +161,25 @@ function levelStyles(level: SecurityEvent["level"]) {
 }
 
 function SecurityPage() {
-  const [logs, setLogs] = useState(getLogs());
-  useEffect(() => subscribeLogs(() => setLogs(getLogs())), []);
+ const [logs, setLogs] = useState<any[]>([]);
 
+useEffect(() => {
+  loadLogs();
+}, []);
+
+async function loadLogs() {
+  const { data, error } = await supabase
+    .from("security_logs")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  setLogs(data || []);
+}
   return (
     <PageShell>
       <section className="bg-gradient-hero py-14 text-white">
