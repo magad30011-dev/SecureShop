@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -36,47 +36,52 @@ export type AdminUserView = {
   role: Role;
 };
 
+const roleCache = new Map<string, Role>();
+
 async function loadUserFromSession(session: Session | null): Promise<User | null> {
   if (!session?.user) return null;
 
-  let retries = 3;
-  while (retries > 0) {
-    try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+  const userId = session.user.id;
 
-      if (error && error.code === "429") {
-        await new Promise((res) => setTimeout(res, 1000));
-        retries--;
-        continue;
-      }
-
-      if (error) {
-        console.error("role error:", error);
-      }
-
-      const role: Role = (data?.role as Role) ?? "user";
-
-      return {
-        id: session.user.id,
-        email: session.user.email ?? "",
-        role,
-      };
-    } catch (err) {
-      console.error("loadUserFromSession failed:", err);
-      await new Promise((res) => setTimeout(res, 1000));
-      retries--;
-    }
+  // 🔥 منع التكرار
+  if (roleCache.has(userId)) {
+    return {
+      id: userId,
+      email: session.user.email ?? "",
+      role: roleCache.get(userId)!,
+    };
   }
 
-  return {
-    id: session.user.id,
-    email: session.user.email ?? "",
-    role: "user",
-  };
+  try {
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("role error:", error);
+    }
+
+    const role: Role = (data?.role as Role) ?? "user";
+
+    // 🔥 تخزين النتيجة
+    roleCache.set(userId, role);
+
+    return {
+      id: userId,
+      email: session.user.email ?? "",
+      role,
+    };
+  } catch (err) {
+    console.error("loadUserFromSession failed:", err);
+
+    return {
+      id: userId,
+      email: session.user.email ?? "",
+      role: "user",
+    };
+  }
 }
 
 export async function adminListUsers(): Promise<AdminUserView[]> {
@@ -166,41 +171,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let mounted = true;
+const lastUserIdRef = useRef<string | null>(null);
 
-    const init = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        const current = await loadUserFromSession(data.session);
+useEffect(() => {
+  let mounted = true;
 
-        if (mounted) {
-          setUser(current);
-          setLoading(false);
-        }
-      } catch (e) {
-        console.error(e);
-        if (mounted) setLoading(false);
+  const init = async () => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      const current = await loadUserFromSession(data.session);
+
+      if (mounted) {
+        lastUserIdRef.current = current?.id ?? null;
+        setUser(current);
+        setLoading(false);
       }
-    };
+    } catch (e) {
+      console.error(e);
+      if (mounted) setLoading(false);
+    }
+  };
 
-    init();
+  init();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+  const { data: listener } = supabase.auth.onAuthStateChange(
+    async (_event, session) => {
+      const userId = session?.user?.id ?? null;
+
+      // 🔥 أهم سطر — يمنع اللوب
+      if (lastUserIdRef.current === userId) return;
+
+      lastUserIdRef.current = userId;
+
       const current = await loadUserFromSession(session);
 
       if (mounted) {
         setUser(current);
         setLoading(false);
       }
-    });
+    }
+  );
 
-    return () => {
-      mounted = false;
-      listener.subscription.unsubscribe();
-    };
-  }, []);
-
+  return () => {
+    mounted = false;
+    listener.subscription.unsubscribe();
+  };
+}, []);
   const login: AuthCtx["login"] = async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
