@@ -21,7 +21,8 @@ const QuerySchema = z
 
 function SearchPage() {
   const [items, setItems] = useState<Product[]>([]);
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(""); // ✅ القيم الآمنة فقط
+  const [inputValue, setInputValue] = useState(""); // 👈 المستخدم يكتب هنا
   const [error, setError] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<string | null>(null);
 
@@ -53,7 +54,23 @@ function SearchPage() {
     setItems(rows);
   }
 
-  const onChange = (v: string) => {
+  // 🔥 تسجيل الهجمات
+  async function logSecurityEvent(input: string, threat: string) {
+    try {
+      await supabase.from("security_logs").insert({
+        type: "RASP",
+        input,
+        threat,
+        page: "search",
+        created_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error("log failed", e);
+    }
+  }
+
+  const onChange = async (v: string) => {
+    setInputValue(v); // 👈 المستخدم يشوف اللي يكتبه
     setBlocked(null);
     setError(null);
 
@@ -62,7 +79,6 @@ function SearchPage() {
       return;
     }
 
-    // 🔒 تنظيف الإدخال
     const cleaned = v.trim().replace(/\s+/g, " ");
 
     // ✅ Validation
@@ -72,14 +88,20 @@ function SearchPage() {
       return;
     }
 
-    // 🚨 RASP check (قبل التخزين)
+    // 🚨 RASP
     const insp = raspInspect(cleaned, "search");
+
     if (!insp.safe) {
-      setBlocked(insp.threat ?? "Suspicious input");
-      return; // ⛔ منع الإدخال نهائيًا
+      const threat = insp.threat ?? "Suspicious input";
+      setBlocked(threat);
+
+      // 🔥 تسجيل الهجوم
+      await logSecurityEvent(cleaned, threat);
+
+      return; // ⛔ منع الإدخال
     }
 
-    // ✅ فقط القيم النظيفة تدخل
+    // ✅ فقط القيم النظيفة
     setQ(cleaned);
   };
 
@@ -92,7 +114,7 @@ function SearchPage() {
       [p.name, p.category, p.description]
         .join(" ")
         .toLowerCase()
-        .includes(safeQuery),
+        .includes(safeQuery)
     );
   }, [items, safeQuery]);
 
@@ -100,7 +122,9 @@ function SearchPage() {
     <PageShell>
       <section className="bg-gradient-hero py-14 text-white">
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-          <h1 className="text-3xl font-bold sm:text-4xl">Secure Product Search</h1>
+          <h1 className="text-3xl font-bold sm:text-4xl">
+            Secure Product Search
+          </h1>
           <p className="mt-2 text-white/80">
             Search products securely with validation and runtime protection.
           </p>
@@ -112,7 +136,7 @@ function SearchPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
           <Input
-            value={q}
+            value={inputValue} // 👈 هنا الفرق المهم
             onChange={(e) => onChange(e.target.value)}
             placeholder="Search products..."
             className="h-12 pl-10 text-base shadow-card"
