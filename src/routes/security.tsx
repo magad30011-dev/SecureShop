@@ -165,8 +165,11 @@ function SecurityPage() {
 
 useEffect(() => {
   loadLogs();
-}, []);
 
+  const interval = setInterval(loadLogs, 2000); // كل ثانيتين
+
+  return () => clearInterval(interval);
+}, []);
 async function loadLogs() {
   const { data, error } = await supabase
     .from("security_logs")

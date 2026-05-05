@@ -80,3 +80,26 @@ export async function protectURL(source = "url") {
 
   return { blocked: false };
 }
+export function isAttack(input: string) {
+  if (!input) return false;
+
+  try {
+    input = decodeURIComponent(input);
+  } catch {}
+
+  input = input.toLowerCase();
+
+  const patterns = [
+    /<script[\s\S]*?>[\s\S]*?<\/script>/i,
+    /javascript:/i,
+    /on\w+\s*=/i,
+    /alert\s*\(/i,
+    /<[^>]+>/i,
+    /union\s+select/i,
+    /select\s+.+\s+from/i,
+    /drop\s+table/i,
+    /--/g,
+  ];
+
+  return patterns.some((p) => p.test(input));
+}

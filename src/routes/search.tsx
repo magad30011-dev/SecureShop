@@ -1,4 +1,4 @@
-import { createFileRoute, useSearch } from "@tanstack/react-router";
+import { createFileRoute, useSearch , redirect } from "@tanstack/react-router";
 import { PageShell } from "@/components/PageShell";
 import { ProductCard } from "@/components/ProductCard";
 import { PRODUCTS, type Product } from "@/lib/data";
@@ -9,9 +9,90 @@ import { raspInspect } from "@/lib/security";
 import { Search, ShieldAlert } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { raspGuard, protectURL } from "@/lib/rasp";
+
+
+
+
+
+
+
 export const Route = createFileRoute("/search")({
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      q: typeof search.q === "string" ? search.q : "",
+    };
+  },
+
+  beforeLoad: async ({ search }) => {
+    const q = search.q;
+
+    if (!q) return;
+
+    const decoded = decodeURIComponent(q);
+
+    const attackPatterns = [
+      /<script.*?>.*?<\/script>/i,
+      /javascript:/i,
+      /onerror=/i,
+      /onload=/i,
+      /alert\s*\(/i,
+      /<.*?>/i,
+    ];
+
+    const isAttack = attackPatterns.some((p) => p.test(decoded));
+
+    if (isAttack) {
+      console.log("🚨 BLOCKED BEFORE RENDER:", decoded);
+
+      try {
+        await supabase.from("security_logs").insert({
+          type: "RASP",
+          threat: "URL Attack",
+          input: decoded,
+          page: "search",
+          created_at: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.error("LOG ERROR:", e);
+      }
+
+      throw redirect({
+        to: "/search",
+        search: {},
+      });
+    }
+  },
+
   component: SearchPage,
 });
+
+
+
+
+// 🔒 فحص قوي ومباشر
+function isAttack(input: string) {
+  try {
+    input = decodeURIComponent(input);
+  } catch {}
+  input = input.toLowerCase();
+
+  const patterns = [
+    /<script[\s\S]*?>[\s\S]*?<\/script>/i,
+    /javascript:/i,
+    /on\w+\s*=/i,
+    /alert\s*\(/i,
+    /<[^>]+>/i,
+    /union\s+select/i,
+    /select\s+.+\s+from/i,
+    /--/g,
+  ];
+
+  return patterns.some((p) => p.test(input));
+}
+
+
+
+
 
 const QuerySchema = z
   .string()
@@ -72,54 +153,7 @@ function SearchPage() {
   }
 
   // 🔐 حماية URL (الهجوم اللي كان يفلت منك)
-useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const value = params.get("q");
 
-  if (!value) return;
-
-  const decoded = decodeURIComponent(value);
-
-  // 🔥 فحص قوي مباشر (بدون الاعتماد على raspInspect)
-  const attackPatterns = [
-    /<script.*?>.*?<\/script>/i,
-    /javascript:/i,
-    /onerror=/i,
-    /onload=/i,
-    /alert\s*\(/i,
-    /<.*?>/i,
-  ];
-
-  const isAttack = attackPatterns.some((p) => p.test(decoded));
-
-  if (isAttack) {
-    console.log("🚨 URL ATTACK BLOCKED:", decoded);
-
-    setBlocked("Blocked URL attack");
-
-    // 🔥 تسجيل مضمون
-    (async () => {
-      try {
-        await supabase.from("security_logs").insert({
-          threat: "URL Attack",
-          input: decoded,
-          page: "search",
-          created_at: new Date().toISOString(),
-        });
-      } catch (e) {
-        console.error("LOG ERROR:", e);
-      }
-    })();
-
-    // ❌ حذف الهجوم فورًا
-    window.history.replaceState({}, "", "/search");
-
-    return;
-  }
-
-  setQ(decoded);
-  setInputValue(decoded);
-}, []);
 
   const onChange = async (v: string) => {
     setInputValue(v);
