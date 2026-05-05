@@ -265,32 +265,28 @@ async function loadLogs() {
           </p>
           <div className="space-y-2">
             {logs.length === 0 && <p className="text-sm text-muted-foreground">No events yet.</p>}
-            {logs.map((ev) => {
-              const { Icon, cls } = levelStyles(ev.level);
-              return (
-                <div
-                  key={ev.id}
-                  className={`flex items-start gap-3 rounded-lg border p-3 text-sm ${cls}`}
-                >
-                  <Icon className="mt-0.5 h-4 w-4 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold">{ev.type}</span>
-                      <span className="text-xs uppercase opacity-70">{ev.level}</span>
-                      {ev.source && (
-                        <span className="rounded bg-background/50 px-1.5 py-0.5 text-xs">
-                          {ev.source}
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-0.5 break-words">{ev.message}</div>
-                    <div className="mt-0.5 text-xs opacity-70">
-                      {new Date(ev.timestamp).toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+           {logs.map((ev, i) => (
+  <div
+    key={i}
+    className="flex items-start gap-3 rounded-lg border p-3 text-sm border-destructive/40 bg-destructive/10 text-destructive"
+  >
+    <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+
+    <div className="min-w-0 flex-1">
+      <div className="font-semibold">
+        {ev.threat || "Security Event"}
+      </div>
+
+      <div className="mt-1 break-words">
+        <strong>Input:</strong> {ev.input}
+      </div>
+
+      <div className="mt-1 text-xs opacity-70">
+        {new Date(ev.created_at).toLocaleString()}
+      </div>
+    </div>
+  </div>
+))}
           </div>
         </Section>
 

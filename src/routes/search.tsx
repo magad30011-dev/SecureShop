@@ -8,7 +8,7 @@ import { z } from "zod";
 import { raspInspect } from "@/lib/security";
 import { Search, ShieldAlert } from "lucide-react";
 import { Input } from "@/components/ui/input";
-
+import { raspGuard, protectURL } from "@/lib/rasp";
 export const Route = createFileRoute("/search")({
   component: SearchPage,
 });
@@ -72,27 +72,54 @@ function SearchPage() {
   }
 
   // 🔐 حماية URL (الهجوم اللي كان يفلت منك)
-  useEffect(() => {
-    if (!searchParams.q) return;
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const value = params.get("q");
 
-    const value = String(searchParams.q);
+  if (!value) return;
 
-    const insp = raspInspect(value, "url");
+  const decoded = decodeURIComponent(value);
 
-    if (!insp.safe) {
-      setBlocked("Blocked URL attack");
+  // 🔥 فحص قوي مباشر (بدون الاعتماد على raspInspect)
+  const attackPatterns = [
+    /<script.*?>.*?<\/script>/i,
+    /javascript:/i,
+    /onerror=/i,
+    /onload=/i,
+    /alert\s*\(/i,
+    /<.*?>/i,
+  ];
 
-      logSecurityEvent(value, "URL Attack");
+  const isAttack = attackPatterns.some((p) => p.test(decoded));
 
-      // ❌ حذف الهجوم من الرابط
-      window.history.replaceState({}, "", "/search");
+  if (isAttack) {
+    console.log("🚨 URL ATTACK BLOCKED:", decoded);
 
-      return;
-    }
+    setBlocked("Blocked URL attack");
 
-    setQ(value);
-    setInputValue(value);
-  }, [searchParams.q]);
+    // 🔥 تسجيل مضمون
+    (async () => {
+      try {
+        await supabase.from("security_logs").insert({
+          threat: "URL Attack",
+          input: decoded,
+          page: "search",
+          created_at: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.error("LOG ERROR:", e);
+      }
+    })();
+
+    // ❌ حذف الهجوم فورًا
+    window.history.replaceState({}, "", "/search");
+
+    return;
+  }
+
+  setQ(decoded);
+  setInputValue(decoded);
+}, []);
 
   const onChange = async (v: string) => {
     setInputValue(v);
