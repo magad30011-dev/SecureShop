@@ -84,21 +84,7 @@ export const TEAM = [
     role: "Team Lead & Threat Modeling",
     initials: "MM",
   },
-  {
-    name: "Abdulraheem Ameen",
-    role: "Frontend & Secure UI Forms",
-    initials: "AA",
-  },
-  {
-    name: "ALBARA AMMAR YASER",
-    role: "RASP & Logging Engineer",
-    initials: "BA",
-  },
-  {
-    name: "Loai Napil Abdallah",
-    role: "SAST / DAST & SCA Analyst",
-    initials: "LN",
-  },
+
 ];
 
 export const TECHNOLOGIES = [
